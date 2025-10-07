@@ -107,6 +107,30 @@ const Application = (settings) => {
     }
 
     switch (event.key) {
+      case 'b':
+      case 'B':
+        handleChangeTool('pen');
+        break;
+      case 'a':
+      case 'A':
+        handleChangeTool('arrow');
+        break;
+      case 't':
+      case 'T':
+        handleChangeTool('text');
+        break;
+      case 'h':
+      case 'H':
+        handleChangeTool('highlighter');
+        break;
+      case 'l':
+      case 'L':
+        handleChangeTool('laser');
+        break;
+      case 'e':
+      case 'E':
+        handleChangeTool('eraser');
+        break;
       case 'v':
       case 'V':
         if (event.ctrlKey || event.metaKey) {

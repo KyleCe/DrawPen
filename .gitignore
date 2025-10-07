@@ -10,3 +10,5 @@ node_modules
 # Electron-Forge
 out/
 .private/
+.idea
+AGENTS.md

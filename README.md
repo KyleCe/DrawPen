@@ -49,7 +49,7 @@ scoop install drawpen
 | Activate Eraser                         | <kbd>6</kbd> | |
 | Switch Color                            | <kbd>7</kbd> | |
 | Switch Thickness (Width)                | <kbd>8</kbd> | |
-| Show/Hide App                           | <kbd>CMD</kbd>/<kbd>CTRL</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> | Global shortcut |
+| Show/Hide App                           | <kbd>CMD</kbd>/<kbd>CTRL</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd> | Global shortcut |
 | Show/Hide ToolBar                       | <kbd>CMD</kbd>/<kbd>CTRL</kbd> + <kbd>T</kbd> | |
 | Show/Hide Whiteboard                    | <kbd>CMD</kbd>/<kbd>CTRL</kbd> + <kbd>W</kbd> | |
 | Clear Desk                              | <kbd>CMD</kbd>/<kbd>CTRL</kbd> + <kbd>K</kbd> | |

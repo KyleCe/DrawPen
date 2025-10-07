@@ -76,7 +76,7 @@ function getTrayIconPath() {
    return iconSrc.DEFAULT
  }
 
-const KEY_SHOW_HIDE_APP = 'CmdOrCtrl+Shift+A'
+const KEY_SHOW_HIDE_APP = 'CmdOrCtrl+Shift+J'
 const KEY_SHOW_HIDE_TOOLBAR = 'CmdOrCtrl+T'
 const KEY_SHOW_HIDE_WHITEBOARD = 'CmdOrCtrl+W'
 const KEY_CLEAR_DESK = 'CmdOrCtrl+K'
@@ -172,8 +172,7 @@ function createMainWindow() {
   let hasDevTools = false
 
   if (process.env.NODE_ENV === 'development') {
-    width = 500
-    height = 500
+    // In development, keep full-screen size but allow resizing and devtools
     isResizable = true
     hasDevTools = true
   }
@@ -448,12 +447,7 @@ function showWindowOnActiveScreen() {
 
   mainWindow.setBounds(currentDisplay.workArea)
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.setBounds({
-      width: 500,
-      height: 500
-    })
-  }
+  // Keep full-screen bounds in development as well
 
   store.set('active_monitor_id', currentDisplay.id)
   store.reset('tool_bar_x')
