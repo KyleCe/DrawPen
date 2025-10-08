@@ -30,6 +30,8 @@ import { FaFont } from "react-icons/fa6";
 import {
   laserTime,
   eraserTime,
+  autoDisappearDelayMs,
+  autoFadeDurationMs,
   shapeList,
   colorList,
   widthList,
@@ -95,6 +97,14 @@ const Application = (settings) => {
   const [redoStackFigures, setRedoStackFigures] = useState([]);
   const [clipboardFigure, setClipboardFigure] = useState(null);
   const [activeBoxShape, setActiveBoxShape] = useState('rectangle'); // rectangle | square | oval | circle
+
+  // Keep refs for timers and state access in callbacks
+  const allFiguresByRef = useRef(allFigures);
+  useEffect(() => {
+    allFiguresByRef.current = allFigures;
+  }, [allFigures]);
+
+  const fadeTimersRef = useRef(new Map()); // id -> { timeoutId, intervalId }
 
   useEffect(() => {
     window.electronAPI.onResetScreen(handleReset);
@@ -404,6 +414,50 @@ const Application = (settings) => {
     }
 
     return figures
+  }
+
+  // Schedule auto fade-out (after delay) for non-laser drawings
+  const scheduleAutoDisappear = (id) => {
+    // Avoid double-scheduling for the same id
+    if (fadeTimersRef.current.has(id)) return;
+
+    const timeoutId = setTimeout(() => {
+      const start = Date.now();
+
+      const intervalId = setInterval(() => {
+        const now = Date.now();
+        const t = Math.min((now - start) / autoFadeDurationMs, 1);
+        const nextOpacity = 1 - t;
+
+        setAllFigures(prev => {
+          const idx = prev.findIndex(f => f.id === id);
+          if (idx === -1) {
+            // Figure already removed; cleanup and stop
+            clearInterval(intervalId);
+            fadeTimersRef.current.delete(id);
+            return prev;
+          }
+
+          if (t >= 1) {
+            const next = prev.slice(0, idx).concat(prev.slice(idx + 1));
+            // Cleanup timer on completion
+            clearInterval(intervalId);
+            fadeTimersRef.current.delete(id);
+            return next;
+          }
+
+          const updated = { ...prev[idx], opacity: nextOpacity };
+          const next = prev.slice();
+          next[idx] = updated;
+          return next;
+        });
+      }, 16); // ~60fps
+
+      // Replace timeout placeholder with interval in the registry
+      fadeTimersRef.current.set(id, { timeoutId: null, intervalId });
+    }, autoDisappearDelayMs);
+
+    fadeTimersRef.current.set(id, { timeoutId, intervalId: null });
   }
 
   const handleChangeColor = (newColorIndex) => {
@@ -727,6 +781,9 @@ const Application = (settings) => {
 
         setUndoStackFigures(prevUndoStack => [...prevUndoStack, { type: 'add', figures: [currentFigure] }]);
         setRedoStackFigures([]);
+
+        // Schedule fade-out (exclude laser)
+        scheduleAutoDisappear(currentFigure.id);
       }
 
       if (activeTool === 'pen') {
@@ -740,6 +797,9 @@ const Application = (settings) => {
         setRedoStackFigures([]);
 
         setAllFigures([...allFigures]);
+
+        // Schedule fade-out (exclude laser)
+        scheduleAutoDisappear(currentFigure.id);
       }
 
       if (shapeList.includes(activeTool)) {
@@ -751,6 +811,8 @@ const Application = (settings) => {
         } else {
           setUndoStackFigures(prevUndoStack => [...prevUndoStack, { type: 'add', figures: [currentFigure] }]);
           setRedoStackFigures([]);
+          // Schedule fade-out for shapes
+          scheduleAutoDisappear(currentFigure.id);
         }
       }
     }
@@ -851,6 +913,9 @@ const Application = (settings) => {
 
     setUndoStackFigures(prevUndoStack => [...prevUndoStack, { type: 'add', figures: [textFigure] }]);
     setRedoStackFigures([]);
+
+    // Schedule fade-out for text
+    scheduleAutoDisappear(textFigure.id);
   };
 
   const activateTextEditor = (pickedFigure) => {

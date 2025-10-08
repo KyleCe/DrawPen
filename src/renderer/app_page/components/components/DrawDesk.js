@@ -58,6 +58,11 @@ const DrawDesk = ({
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     allFigures.forEach((figure) => {
+      // Apply per-figure opacity for fade-out animation
+      ctx.save();
+      const alpha = (figure.opacity !== undefined) ? figure.opacity : 1;
+      ctx.globalAlpha = alpha;
+
       if (figure.type === 'pen') {
         drawPen(ctx, figure, updateRainbowColorDeg)
       }
@@ -68,44 +73,40 @@ const DrawDesk = ({
 
       if (figure.type === 'arrow') {
         drawArrow(ctx, figure, updateRainbowColorDeg)
-
-        if (activeFigureInfo && figure.id === activeFigureInfo.id) {
-          drawArrowActive(ctx, figure)
-        }
       }
 
       if (figure.type === 'line') {
         drawLine(ctx, figure, updateRainbowColorDeg)
-
-        if (activeFigureInfo && figure.id === activeFigureInfo.id) {
-          drawLineActive(ctx, figure)
-        }
       }
 
       if (figure.type === 'rectangle') {
         drawRectangle(ctx, figure, updateRainbowColorDeg)
-
-        if (activeFigureInfo && figure.id === activeFigureInfo.id) {
-          drawRectangleActive(ctx, figure)
-        }
       }
 
       if (figure.type === 'oval') {
         drawOval(ctx, figure, updateRainbowColorDeg)
-
-        if (activeFigureInfo && figure.id === activeFigureInfo.id) {
-          drawOvalActive(ctx, figure)
-        }
       }
 
       if (figure.type === 'text') {
-        let isActive = false;
+        drawText(ctx, figure, updateRainbowColorDeg, Boolean(activeFigureInfo && figure.id === activeFigureInfo.id))
+      }
 
-        if (activeFigureInfo && figure.id === activeFigureInfo.id) {
-          isActive = true;
+      ctx.restore();
+
+      // Draw active handles/overlays at full opacity
+      if (activeFigureInfo && figure.id === activeFigureInfo.id) {
+        if (figure.type === 'arrow') {
+          drawArrowActive(ctx, figure)
         }
-
-        drawText(ctx, figure, updateRainbowColorDeg, isActive)
+        if (figure.type === 'line') {
+          drawLineActive(ctx, figure)
+        }
+        if (figure.type === 'rectangle') {
+          drawRectangleActive(ctx, figure)
+        }
+        if (figure.type === 'oval') {
+          drawOvalActive(ctx, figure)
+        }
       }
     })
 

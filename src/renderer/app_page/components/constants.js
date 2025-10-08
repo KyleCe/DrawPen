@@ -1,5 +1,8 @@
 export const laserTime = 2000;
 export const eraserTime = 100;
+// Auto-disappear for non-laser drawings
+export const autoDisappearDelayMs = 3000; // start fade after 3s
+export const autoFadeDurationMs = 1000;   // fade duration 1s
 export const rainbowScaleFactor = 0.03;
 export const minObjectDistance = 5; // Minimum length of drawn object
 export const dotMargin = 5; // Margin from figure to dot
