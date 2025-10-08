@@ -21,7 +21,7 @@ import {
   resizeFigure,
   moveToCoordinates,
 } from './utils/figureDetection.js';
-import { FaPaintBrush, FaHighlighter, FaRegSquare, FaRegCircle, FaArrowRight, FaEraser } from "react-icons/fa";
+import { FaPaintBrush, FaHighlighter, FaRegSquare, FaRegCircle, FaArrowRight, FaEraser, FaSquare } from "react-icons/fa";
 import { AiOutlineLine } from "react-icons/ai";
 import { GiLaserburn } from "react-icons/gi";
 import { MdOutlineCancel } from "react-icons/md";
@@ -48,6 +48,7 @@ const Icons = {
   FaEraser,
   FaHighlighter,
   FaFont,
+  FaSquare,
 };
 
 const Application = (settings) => {
@@ -93,6 +94,7 @@ const Application = (settings) => {
   const [undoStackFigures, setUndoStackFigures] = useState([]);
   const [redoStackFigures, setRedoStackFigures] = useState([]);
   const [clipboardFigure, setClipboardFigure] = useState(null);
+  const [activeBoxShape, setActiveBoxShape] = useState('rectangle'); // rectangle | square | oval | circle
 
   useEffect(() => {
     window.electronAPI.onResetScreen(handleReset);
@@ -110,6 +112,14 @@ const Application = (settings) => {
       case 'b':
       case 'B':
         handleChangeTool('pen');
+        break;
+      case 'r':
+      case 'R':
+        // Select rounded rectangle by default (Box -> rectangle)
+        if (activeBoxShape !== 'rectangle') {
+          setActiveBoxShape('rectangle');
+        }
+        handleChangeTool('rectangle');
         break;
       case 'a':
       case 'A':
@@ -580,6 +590,16 @@ const Application = (settings) => {
 
     if (shapeList.includes(newFigure.type)) {
       newFigure.points.push([x, y]);
+
+      // Aspect lock for Box submenu selections
+      if (activeTool === 'rectangle' && activeBoxShape === 'square') {
+        newFigure.aspectLocked = true;
+        newFigure.shapeVariant = 'square';
+      }
+      if (activeTool === 'oval' && activeBoxShape === 'circle') {
+        newFigure.aspectLocked = true;
+        newFigure.shapeVariant = 'circle';
+      }
     }
 
     if (newFigure.type === 'highlighter' && newFigure.colorIndex === 0) {
@@ -641,7 +661,21 @@ const Application = (settings) => {
       if (shapeList.includes(activeTool)) {
         const currentFigure = allFigures[allFigures.length - 1];
 
-        currentFigure.points[1] = [x, y];
+        let endX = x;
+        let endY = y;
+
+        if (currentFigure.aspectLocked) {
+          const [startX, startY] = currentFigure.points[0];
+          const dx = x - startX;
+          const dy = y - startY;
+          const side = Math.max(Math.abs(dx), Math.abs(dy));
+          const sx = dx >= 0 ? 1 : -1;
+          const sy = dy >= 0 ? 1 : -1;
+          endX = startX + side * sx;
+          endY = startY + side * sy;
+        }
+
+        currentFigure.points[1] = [endX, endY];
 
         setAllFigures([...allFigures]);
         return
@@ -894,10 +928,20 @@ const Application = (settings) => {
             activeTool={activeTool}
             activeColorIndex={activeColorIndex}
             activeWidthIndex={activeWidthIndex}
+            activeBoxShape={activeBoxShape}
             handleCloseToolBar={handleCloseToolBar}
             handleChangeColor={handleChangeColor}
             handleChangeWidth={handleChangeWidth}
             handleChangeTool={handleChangeTool}
+            handleChangeBoxShape={(shape) => {
+              // shape: rectangle | square | oval | circle
+              setActiveBoxShape(shape);
+              if (shape === 'rectangle' || shape === 'square') {
+                handleChangeTool('rectangle');
+              } else {
+                handleChangeTool('oval');
+              }
+            }}
             handleReset={handleReset}
             Icons={Icons}
           />

@@ -13,6 +13,8 @@ import {
   drawOvalActive,
   drawRectangle,
   drawRectangleActive,
+  drawBox,
+  drawBoxActive,
   drawLaser,
   drawEraserTail,
   drawText,

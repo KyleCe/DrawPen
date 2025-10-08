@@ -12,10 +12,12 @@ const ToolBar = ({
   activeTool,
   activeColorIndex,
   activeWidthIndex,
+  activeBoxShape,
   handleCloseToolBar,
   handleChangeColor,
   handleChangeWidth,
   handleChangeTool,
+  handleChangeBoxShape,
   handleReset,
   Icons,
 }) => {
@@ -33,7 +35,11 @@ const ToolBar = ({
   const [dragging, setDragging] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const toolbarRef = useRef()
+  const buttonsRef = useRef()
+  const draglinesRef = useRef()
+  const itemsRef = useRef()
   const [slide, setSlide] = useState("");
+  const [measuredWidth, setMeasuredWidth] = useState(null);
 
   const onMouseDown = useCallback((e) => {
     setDragging(true);
@@ -93,17 +99,35 @@ const ToolBar = ({
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
     window.addEventListener("keydown", onKeyDown);
+    const onResize = () => measureWidth();
+    window.addEventListener("resize", onResize);
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onResize);
     };
   }, [onMouseMove, onMouseUp, onKeyDown]);
 
   useEffect(() => {
     setSlide("");
   }, [activeTool, activeColorIndex, activeWidthIndex]);
+
+  const measureWidth = useCallback(() => {
+    const itemsWidth = itemsRef.current ? itemsRef.current.scrollWidth : 0;
+    const buttonsWidth = buttonsRef.current ? buttonsRef.current.offsetWidth : 0;
+    const dragWidth = draglinesRef.current ? draglinesRef.current.offsetWidth : 0;
+    const borders = 2; // left+right border
+    const padding = 0; // adjust if outer paddings are added later
+
+    const total = itemsWidth + buttonsWidth + dragWidth + borders + padding;
+    if (total > 0) setMeasuredWidth(total);
+  }, []);
+
+  useEffect(() => {
+    measureWidth();
+  }, [measureWidth, slide, activeTool, activeColorIndex, activeWidthIndex]);
 
   const pickTool = (tool) => {
     handleChangeTool(tool);
@@ -120,34 +144,37 @@ const ToolBar = ({
     setSlide("")
   };
 
-  const renderGroupIcon = () => figureIcons[lastActiveFigure] || null;
-
-  const pickFigureOrSwitchView = () => {
-    if (shapeList.includes(activeTool)) {
+  const pickRectangleOrSwitchView = () => {
+    if (['rectangle', 'oval'].includes(activeTool)) {
       setSlide("tool-slide");
     } else {
-      pickTool(lastActiveFigure);
+      handleChangeBoxShape('rectangle');
     }
   };
 
   return (
-    <aside id="toolbar" ref={toolbarRef} className={`${slide}`} style={{ left: position.x, top: position.y }}>
-      <div className="toolbar__buttons">
+    <aside id="toolbar" ref={toolbarRef} className={`${slide}`} style={{ left: position.x, top: position.y, width: measuredWidth ? `${measuredWidth}px` : undefined }}>
+      <div className="toolbar__buttons" ref={buttonsRef}>
         <button onClick={handleCloseToolBar} title="Close">
           <Icons.MdOutlineCancel size={16} />
         </button>
       </div>
       <div className="toolbar__container">
         <div className="toolbar__body">
-          <ul className="toolbar__items">
+          <ul className="toolbar__items" ref={itemsRef}>
             <li className={activeTool === "pen" ? "active" : undefined}>
               <button onClick={() => handleChangeTool("pen")} title="Pen">
                 <Icons.FaPaintBrush />
               </button>
             </li>
-            <li className={shapeList.includes(activeTool) ? "active more_figures" : undefined}>
-              <button onClick={() => pickFigureOrSwitchView()} title="Shapes">
-                {renderGroupIcon()}
+            <li className={(activeTool === "rectangle" || activeTool === "oval") ? "active more_figures" : undefined}>
+              <button onClick={() => pickRectangleOrSwitchView()} title="Rectangle & Shapes">
+                <Icons.FaRegSquare />
+              </button>
+            </li>
+            <li className={activeTool === "arrow" ? "active" : undefined}>
+              <button onClick={() => handleChangeTool("arrow")} title="Arrow">
+                <Icons.FaArrowRight />
               </button>
             </li>
             <li className={activeTool === "text" ? "active" : undefined}>
@@ -185,7 +212,7 @@ const ToolBar = ({
               </button>
             </li>
           </ul>
-        </div>
+          </div>
         <div className="side-view-body color-group">
           <ul className="toolbar__items">
             {colorList.map((color, index) => (
@@ -201,24 +228,24 @@ const ToolBar = ({
         </div>
         <div className="side-view-body tool-group">
           <ul className="toolbar__items">
-            <li className={activeTool === "arrow" ? "active" : undefined}>
-              <button onClick={() => pickTool("arrow")} tabIndex={-1}>
-                <Icons.FaArrowRight />
-              </button>
-            </li>
-            <li className={activeTool === "rectangle" ? "active" : undefined}>
-              <button onClick={() => pickTool("rectangle")} tabIndex={-1}>
+            <li className={activeBoxShape === "rectangle" ? "active" : undefined}>
+              <button onClick={() => handleChangeBoxShape("rectangle")} tabIndex={-1}>
                 <Icons.FaRegSquare />
               </button>
             </li>
-            <li className={activeTool === "oval" ? "active" : undefined}>
-              <button onClick={() => pickTool("oval")} tabIndex={-1}>
+            <li className={activeBoxShape === "square" ? "active" : undefined}>
+              <button onClick={() => handleChangeBoxShape("square")} tabIndex={-1}>
+                <Icons.FaRegSquare />
+              </button>
+            </li>
+            <li className={activeBoxShape === "oval" ? "active" : undefined}>
+              <button onClick={() => handleChangeBoxShape("oval")} tabIndex={-1}>
                 <Icons.FaRegCircle />
               </button>
             </li>
-            <li className={activeTool === "line" ? "active" : undefined}>
-              <button onClick={() => pickTool("line")} tabIndex={-1}>
-                <Icons.AiOutlineLine />
+            <li className={activeBoxShape === "circle" ? "active" : undefined}>
+              <button onClick={() => handleChangeBoxShape("circle")} tabIndex={-1}>
+                <Icons.FaRegCircle />
               </button>
             </li>
           </ul>
@@ -235,7 +262,7 @@ const ToolBar = ({
           </ul>
         </div>
       </div>
-      <div className="toolbar__draglines" onMouseDown={onMouseDown}>
+      <div className="toolbar__draglines" onMouseDown={onMouseDown} ref={draglinesRef}>
         <div className="draglines">
           <div />
           <div />

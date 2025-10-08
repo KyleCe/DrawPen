@@ -538,6 +538,51 @@ const drawTextSkeleton = (ctx, [startX, startY], text, color, fontSize, font_y_o
   ctx.restore();
 }
 
+export const drawBox = (ctx, figure, updateRainbowColorDeg) => {
+  const [pointA, pointB] = figure.points
+  const [color, width] = detectColorAndWidth(ctx, figure, updateRainbowColorDeg)
+
+  if (!pointB) return // Don't draw if we don't have both points
+
+  drawBoxSkeleton(ctx, pointA, pointB, color, width)
+}
+
+export const drawBoxActive = (ctx, figure) => {
+  const [pointA, pointB] = figure.points
+  const [color, width] = activeColorAndWidth()
+
+  if (!pointB) return // Don't draw if we don't have both points
+
+  drawBoxSkeleton(ctx, pointA, pointB, color, width)
+
+  const [startX, startY] = pointA;
+  const [endX, endY] = pointB;
+
+  drawDot(ctx, pointA)
+  drawDot(ctx, pointB)
+  drawDot(ctx, [startX, endY])
+  drawDot(ctx, [endX, startY])
+}
+
+const drawBoxSkeleton = (ctx, pointA, pointB, color, width) => {
+  const [startX, startY] = pointA;
+  const [endX, endY] = pointB;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineJoin = 'miter';
+  ctx.lineCap = 'square';
+
+  const length = Math.abs(endX - startX);
+  const height = Math.abs(endY - startY);
+  const x = Math.min(startX, endX);
+  const y = Math.min(startY, endY);
+
+  ctx.beginPath();
+  ctx.rect(x, y, length, height);
+  ctx.stroke();
+}
+
 const drawSelectionBox = (ctx, startX, startY, endX, endY) => {
   ctx.strokeStyle = "#6CC3E2";
   ctx.lineWidth = 1;
