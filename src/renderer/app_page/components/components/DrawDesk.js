@@ -30,6 +30,7 @@ const DrawDesk = ({
   handleMouseMove,
   handleMouseUp,
   handleDoubleClick,
+  handleWillStartDrawing,
   updateRainbowColorDeg,
 }) => {
   // console.log('DrawDesk render');
@@ -124,14 +125,28 @@ const DrawDesk = ({
 
     const coordinates = getMouseCoordinates(event)
 
-    handleMouseDown(coordinates);
+    // 当即将开始绘制时，先关闭 click-through，防止底层应用收到点击
+    if (handleWillStartDrawing(coordinates)) {
+      window.electronAPI.invokeSetIgnoreMouseEvents(false);
+      event.preventDefault();
+    }
 
-    event.preventDefault();
+    handleMouseDown(coordinates);
     // event.stopPropagation();
   }
 
   const onMouseMove = (event) => {
     const coordinates = getMouseCoordinates(event)
+
+    // 根据当前位置判断是否可能开始绘制
+    // 如果会绘制，则关闭 click-through，否则开启以便底层可交互
+    try {
+      if (handleWillStartDrawing(coordinates)) {
+        window.electronAPI.invokeSetIgnoreMouseEvents(false);
+      } else {
+        window.electronAPI.invokeSetIgnoreMouseEvents(true);
+      }
+    } catch (_) {}
 
     handleMouseMove(coordinates);
   }
@@ -140,6 +155,9 @@ const DrawDesk = ({
     const coordinates = getMouseCoordinates(event)
 
     handleMouseUp(coordinates);
+
+    // 鼠标抬起后恢复 click-through，让底层继续可交互
+    try { window.electronAPI.invokeSetIgnoreMouseEvents(true); } catch (_) {}
   }
 
   const onDoubleClick = (event) => {

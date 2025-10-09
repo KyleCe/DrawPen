@@ -42,6 +42,7 @@ const ToolBar = ({
   const [measuredWidth, setMeasuredWidth] = useState(null);
 
   const onMouseDown = useCallback((e) => {
+    try { window.electronAPI.invokeSetIgnoreMouseEvents(false); } catch (_) {}
     setDragging(true);
     setOffset({
       x: e.clientX - position.x,
@@ -85,6 +86,7 @@ const ToolBar = ({
 
   const onMouseUp = useCallback(() => {
     setDragging(false);
+    try { window.electronAPI.invokeSetIgnoreMouseEvents(true); } catch (_) {}
   }, []);
 
   const onKeyDown = useCallback((e) => {
@@ -153,7 +155,7 @@ const ToolBar = ({
   };
 
   return (
-    <aside id="toolbar" ref={toolbarRef} className={`${slide}`} style={{ left: position.x, top: position.y, width: measuredWidth ? `${measuredWidth}px` : undefined }}>
+    <aside id="toolbar" ref={toolbarRef} className={`${slide}`} style={{ left: position.x, top: position.y, width: measuredWidth ? `${measuredWidth}px` : undefined }} onMouseEnter={() => { try { window.electronAPI.invokeSetIgnoreMouseEvents(false); } catch (_) {} }} onMouseLeave={() => { try { window.electronAPI.invokeSetIgnoreMouseEvents(true); } catch (_) {} }}>
       <div className="toolbar__buttons" ref={buttonsRef}>
         <button onClick={handleCloseToolBar} title="Close">
           <Icons.MdOutlineCancel size={16} />

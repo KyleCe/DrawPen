@@ -557,6 +557,42 @@ const Application = (settings) => {
     });
   }
 
+  // 判断是否会开始绘制
+  const handleWillStartDrawing = ({ x, y }) => {
+    // 如果正在操作图形，需要阻止事件
+    if (isActiveFigureMoving()) {
+      return true;
+    }
+
+    // 如果有活跃的图形，判断是否点击到了图形或控制点
+    if (activeFigureInfo) {
+      const resizingDotName = getDotNameAtMousePosition(x, y);
+      if (resizingDotName) {
+        return true;
+      }
+    }
+
+    // 判断是否点击到了现有图形
+    if (!['highlighter', 'eraser', 'laser'].includes(activeTool)) {
+      const selectedFigure = getFigureAtMousePosition(x, y);
+      if (selectedFigure) {
+        return true;
+      }
+    }
+
+    // 对于绘图工具，总是会开始绘制
+    if (['laser', 'eraser', 'text', 'pen', 'highlighter'].includes(activeTool)) {
+      return true;
+    }
+
+    // 对于形状工具，总是会开始绘制
+    if (shapeList.includes(activeTool)) {
+      return true;
+    }
+
+    return false;
+  };
+
   const handleMouseDown = ({ x, y }) => {
     // Diactivate text editor
     if (textEditorContainer) {
@@ -981,6 +1017,7 @@ const Application = (settings) => {
         handleMouseMove={handleMouseMove}
         handleMouseUp={handleMouseUp}
         handleDoubleClick={handleDoubleClick}
+        handleWillStartDrawing={handleWillStartDrawing}
         updateRainbowColorDeg={updateRainbowColorDeg}
       />
 

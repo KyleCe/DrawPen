@@ -198,6 +198,14 @@ function createMainWindow() {
 
   mainWindow.loadURL(APP_WINDOW_WEBPACK_ENTRY);
 
+  // Default to click-through so underlying apps remain interactive
+  // We still receive mouse move events with forward: true
+  try {
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  } catch (_) {
+    // noop
+  }
+
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
   mainWindow.on('closed', function () {
@@ -399,6 +407,12 @@ function showDrawWindow() {
   showWindowOnActiveScreen()
 
   foregroundMode = true
+  // Ensure default state is pass-through when shown
+  try {
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  } catch (_) {
+    // noop
+  }
   updateContextMenu() // Need to rerender the context menu
 }
 
@@ -454,3 +468,20 @@ function showWindowOnActiveScreen() {
   store.reset('tool_bar_y')
   mainWindow.reload()
 }
+
+// Toggle whether the overlay window should ignore mouse events
+ipcMain.handle('set_ignore_mouse_events', (_event, ignore) => {
+  if (!mainWindow) return null;
+
+  try {
+    if (ignore) {
+      mainWindow.setIgnoreMouseEvents(true, { forward: true });
+    } else {
+      mainWindow.setIgnoreMouseEvents(false);
+    }
+  } catch (_) {
+    // noop
+  }
+
+  return null;
+});

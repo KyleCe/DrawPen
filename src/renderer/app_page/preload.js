@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   invokeHideApp: () => ipcRenderer.invoke('hide_app'),
   invokeGetSettings: () => ipcRenderer.invoke('get_settings'),
   invokeSetSettings: (settings) => ipcRenderer.invoke('set_settings', settings),
+  invokeSetIgnoreMouseEvents: (ignore) => ipcRenderer.invoke('set_ignore_mouse_events', ignore),
 
   // Main -> Renderer
   onResetScreen: (callback) => ipcRenderer.on('reset_screen', callback),

@@ -53,6 +53,9 @@ const TextEditor = ({
     const text = textArea.innerText || '';
 
     handleTextEditorBlur(text);
+
+    // After finishing text input, re-enable click-through
+    try { window.electronAPI.invokeSetIgnoreMouseEvents(true); } catch (_) {}
   };
 
   const handleInput = () => {
@@ -95,6 +98,9 @@ const TextEditor = ({
       spellCheck="false"
       ref={textAreaRef}
       onBlur={onBlur}
+      onFocus={() => { try { window.electronAPI.invokeSetIgnoreMouseEvents(false); } catch (_) {} }}
+      onMouseEnter={() => { try { window.electronAPI.invokeSetIgnoreMouseEvents(false); } catch (_) {} }}
+      onMouseLeave={() => { try { window.electronAPI.invokeSetIgnoreMouseEvents(true); } catch (_) {} }}
       onInput={handleInput}
       style={{
         top: top,
